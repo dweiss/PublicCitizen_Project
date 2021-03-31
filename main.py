@@ -1,5 +1,6 @@
 from selenium import webdriver
 import xlsxwriter
+import os
 
 
 def number_finder(text):
@@ -29,8 +30,9 @@ def setup():
     # beginning = input()
     print('Enter End Start Date Range (##/##/####):')
     # end = input()
-    event_start_beg.send_keys('02/14/2021')
-    event_start_end.send_keys('02/14/2021')
+    # 02/14/2021
+    event_start_beg.send_keys('02/09/2021')
+    event_start_end.send_keys('02/09/2021')
 
     # Click submit
     search = driver.find_element_by_name('_fuseaction=main.searchresults')
@@ -95,7 +97,8 @@ def filling_sheet(switch, sheet, counter, last_count, cell0, cell1, cell2, cell3
         i += 1
 
 def extracting_information(driver, cases, case_numbers):
-    book = xlsxwriter.Workbook(r'C:\Users\teran\PycharmProjects\PublicCitizen_Project\TCEQ_Data.xlsx')
+    direct = os.getcwd() + '\TCEQ_Data.xlsx'
+    book = xlsxwriter.Workbook(direct)
     sheet = book.add_worksheet('Cases')
     # sheet.set_column(0, 1, 100)
     sheet.write(0, 0, 'INCIDENT NO.')
