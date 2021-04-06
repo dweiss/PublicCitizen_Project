@@ -2,6 +2,10 @@ from selenium import webdriver
 import xlsxwriter
 import os
 
+global switch
+global counter
+global last_count
+
 
 def number_finder(text):
     return any(i.isdigit() for i in text)
@@ -22,21 +26,66 @@ def setup():
     driver.get('https://www2.tceq.texas.gov/oce/eer/index.cfm')
 
     # Find input boxes
-    event_start_beg = driver.find_element_by_name('event_start_beg_dt')
-    event_start_end = driver.find_element_by_name('event_start_end_dt')
+    print('If you would like a single search enter "Y":')
+    single_search = input()
+    if single_search == 'Y':
+        incident_number = driver.find_element_by_name('incid_track_num')
+        print('Enter Incident Number:')
+        incident_number_input = input()
+        incident_number.send_keys(incident_number_input)
+    else:
+        event_start_beg = driver.find_element_by_name('event_start_beg_dt')
+        event_start_end = driver.find_element_by_name('event_start_end_dt')
+        event_end_beg = driver.find_element_by_name('event_end_beg_dt')
+        event_end_end = driver.find_element_by_name('event_end_end_dt')
+        cn = driver.find_element_by_name('cn_txt')
+        customer_name = driver.find_element_by_name('cust_name')
+        rn = driver.find_element_by_name('rn_txt')
+        regulated_entity_name = driver.find_element_by_name('re_name')
+        county = driver.find_element_by_name('ls_cnty_name')
+        region = driver.find_element_by_name('ls_region_cd')
+        event_type = driver.find_element_by_name('ls_event_typ_cd')
 
-    # Start Date information
-    print('Enter Beginning Start Date Range (##/##/####):')
-    # beginning = input()
-    print('Enter End Start Date Range (##/##/####):')
-    # end = input()
-    # 02/14/2021
-    event_start_beg.send_keys('02/09/2021')
-    event_start_end.send_keys('02/09/2021')
+        print('Enter information here, enter nothing to omit.')
+        print('Enter Beginning Start Date Range (##/##/####):')
+        beginning_start = input()
+        event_start_beg.send_keys(beginning_start)
+        print('Enter Last Start Date Range (##/##/####):')
+        last_start = input()
+        event_start_end.send_keys(last_start)
+        print('Enter Beginning End Date Range (##/##/#### must be after 1/31/2003):')
+        end_start = input()
+        event_end_beg.send_keys(end_start)
+        print('Enter Last End Date Range (##/##/#### must be after 1/31/2003):')
+        end_end = input()
+        event_end_end.send_keys(end_end)
+        print('Enter CN:')
+        cn_input = input()
+        cn.send_keys(cn_input)
+        print('Enter Customer Name:')
+        customer_name_input = input()
+        customer_name.send_keys(customer_name_input)
+        print('Enter RN:')
+        rn_input = input()
+        rn.send_keys(rn_input)
+        print('Enter Regulated Entity Name:')
+        regulated_entity_name_input = input()
+        regulated_entity_name.send_keys(regulated_entity_name_input)
+        print('Enter County:')
+        county_input = input()
+        county.send_keys(county_input)
+        print('Enter Region (REGION ## - _____):')
+        region_input = input()
+        region.send_keys(region_input)
+        print('Enter Event Type:')
+        event_type_input = input()
+        event_type.send_keys(event_type_input)
+
 
     # Click submit
     search = driver.find_element_by_name('_fuseaction=main.searchresults')
     search.click()
+    print('Processing Now...')
 
     return driver
 
@@ -67,13 +116,20 @@ def collecting_information(driver):
         if next_impossible:
             repeat = False
 
-    return cases, case_numbers
+    return cases
 
+def time_converter(half, time):
+    sep = time.split(":")
+    hour = int(sep[0])
+    if (hour == 12):
+        hour = 0
+    if (half == 'PM'):
+        hour += 12
+    return str(hour) + ':' + str(sep[1])
 
-def filling_sheet(switch, sheet, counter, last_count, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
+def filling_sheet(sheet, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
                   cell9, cell10, cell16, cell17, cell18, cell19, cell20, cell21):
     i = last_count
-    # print('i:', i, 'counter:', counter)
     if switch:
         i += 1
     while i < counter:
@@ -96,7 +152,119 @@ def filling_sheet(switch, sheet, counter, last_count, cell0, cell1, cell2, cell3
         sheet.write(i, 21, cell21)
         i += 1
 
-def extracting_information(driver, cases, case_numbers):
+def contaminants(questions, answers, order, sheet):
+    # Loop Counters
+    questions_counter = 0
+    answers_counter = 0
+    number_of_contaminants = 0
+    global switch
+    global counter
+    global last_count
+
+    cell16 = float(0)
+    cell17 = ''
+    cell18 = ''
+
+    # Gathering Information
+    while questions_counter < len(questions):
+        print_out = new_line_remover(questions[questions_counter])
+        if 'List of Air Contaminant Compounds' in questions[questions_counter].__getattribute__('text'):
+            splitting = questions[questions_counter].__getattribute__('text').split()
+            for s in splitting:
+                if s.isnumeric():
+                    number_of_contaminants = int(s)
+            questions_counter += 1
+        else:
+            if number_of_contaminants > 0:
+                questions_counter += 6
+
+                while number_of_contaminants > 0:
+                    contaminant = (answers[answers_counter].__getattribute__('text'))
+                    sheet.write(counter, 11, contaminant)
+                    answers_counter += 1
+
+                    quantity = answers[answers_counter].__getattribute__('text')
+                    sheet.write(counter, 12, float(quantity))
+                    answers_counter += 1
+
+                    unit_measurement = answers[answers_counter].__getattribute__('text')
+                    sheet.write(counter, 15, unit_measurement)
+                    answers_counter += 1
+
+                    counter += 1
+
+                    emissionlimit = answers[answers_counter].__getattribute__('text')
+                    cell16 = float(emissionlimit)
+                    # sheet.write(counter, 17, emissionlimit)
+                    answers_counter += 1
+
+                    units = answers[answers_counter].__getattribute__('text')
+                    cell17 = units
+                    # sheet.write(counter, 18, units)
+                    answers_counter += 1
+
+                    authorization = answers[answers_counter].__getattribute__('text')
+                    cell18 = authorization
+                    answers_counter += 1
+
+                    number_of_contaminants -= 1
+            else:
+                count = True
+                answer = answers[answers_counter].__getattribute__('text')
+                if print_out == 'Incident Tracking Number:':
+                    cell0 = int(answer)
+                elif print_out == 'RN:':
+                    cell1 = answer
+                elif print_out == 'Regulated Entity Name:':
+                    cell2 = answer
+                elif print_out == 'Physical Location:':
+                    cell3 = answer
+                elif print_out == 'County:':
+                    cell4 = answer
+                elif print_out == 'Notification Jurisdictions:':
+                    x = answer.split(" ")
+                    cell5 = int(x[1])
+                elif print_out == 'Process Unit or Area Common Names':
+                    text = order[2].__getattribute__('text').split("\n")
+                    answers_counter += (len(text) - 1)
+                    questions_counter += 1
+                    count = False
+                elif print_out == 'Facility Common Name':
+                    text = order[3].__getattribute__('text').split("\n")
+                    answers_counter += (len(text) - 1) * 2
+                    questions_counter += 2
+                    count = False
+                elif print_out == 'Date and Time Event Discovered or Scheduled Activity Start:':
+                    y = answer.split(" ")
+                    time1 = time_converter(y[-1], y[-2])
+                    cell6 = str(y[0]) + ' ' + time1
+                elif print_out == 'Date and Time Event or Scheduled Activity Ended:':
+                    z = answer.split(" ")
+                    time2 = time_converter(z[-1], z[-2])
+                    cell7 = str(z[0]) + ' ' + time2
+                elif print_out == 'Event/Activity Type:':
+                    cell8 = answer
+                elif print_out == '1 - Emission Point Common Name:':
+                    cell9 = answer
+                elif print_out == 'Emission Point Number:':
+                    cell10 = answer
+                elif print_out == 'Basis Used to Determine Quantities and Any Additional Information Necessary to Evaluate the Event:':
+                    cell19 = answer
+                elif print_out == 'Cause of Emission Event or Excess Opacity Event, or Reason for Scheduled Activity:':
+                    cell20 = answer
+                elif print_out == 'Actions Taken, or Being Taken, to Minimize Emissions And/or Correct the Situation:':
+                    cell21 = answer
+                if count:
+                    questions_counter += 1
+                    answers_counter += 1
+    filling_sheet(sheet, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
+                cell9, cell10, cell16, cell17, cell18, cell19, cell20, cell21)
+    if switch:
+        switch = False
+    last_count = counter
+
+
+def extracting_information(driver, cases):
     direct = os.getcwd() + '\TCEQ_Data.xlsx'
     book = xlsxwriter.Workbook(direct)
     sheet = book.add_worksheet('Cases')
@@ -123,14 +291,19 @@ def extracting_information(driver, cases, case_numbers):
     sheet.write(0, 19, 'COMMENT NO.')
     sheet.write(0, 20, 'Cause of Emission Event')
     sheet.write(0, 21, 'Actions Taken')
+    global counter
+    global last_count
+    global switch
+
     counter = 0
     last_count = 0
     switch = True
     # Clicking through the files
+    count = True
     for j in cases:
-        print('')
-        extraction = []
-        counter += 1
+        if (count):
+            counter += 1
+            count = False
         # Go to files
         driver.get(j)
 
@@ -141,154 +314,14 @@ def extracting_information(driver, cases, case_numbers):
         # Seperated by forms
         order = driver.find_elements_by_class_name('aeme')
 
-        #line up list of questions with list of order. Probably will need a 3d list.
-        some_counter = 0
-        for i in order:
-            writing = str(i.__getattribute__('text'))
-            for j in questions:
-                print(j.__getattribute__('text'))
-                print()
-                if j.__getattribute__('text') in writing:
-                    # print(new_line_remover(j))
-                    updated_order = writing.split(j.__getattribute__('text'))
-            # for k in answers:
-            #     if k.__getattribute__('text') in writing and len(k.__getattribute__('text')) > 0:
-            #         updated_order = writing.split(k.__getattribute__('text'))
-            print("order:")
-            print(updated_order)
-            print()
-
-
-        # Loop Counters
-        questions_counter = 0
-        answers_counter = 0
-        # print(answers.__getattribute__('text'))
-        number_of_contaminants = 0
-
-        # for i in answers:
-            # print('i:', i.__getattribute__('text'))
-        # Gathering Information
-        while questions_counter < len(questions):
-            print_out = new_line_remover(questions[questions_counter])
-            # print('Print Out =', print_out)
-
-            if 'List of Air Contaminant Compounds' in questions[questions_counter].__getattribute__('text'):
-                # print('TEST 1', print_out)
-                # extraction.append(print_out)
-                # extraction.append(' ')
-                splitting = questions[questions_counter].__getattribute__('text').split()
-                for s in splitting:
-                    if s.isnumeric():
-                        number_of_contaminants = int(s)
-                questions_counter += 1
-            else:
-                if number_of_contaminants > 0:
-                    questions_counter += 6
-
-                    while number_of_contaminants > 0:
-                        contaminant = (answers[answers_counter].__getattribute__('text'))
-                        # print('contaminant', contaminant)
-                        # extraction.append(contaminant)
-                        sheet.write(counter, 11, contaminant)
-                        answers_counter += 1
-
-                        quantity = answers[answers_counter].__getattribute__('text')
-                        # extraction.append(quantity)
-                        # print('quantity', quantity)
-                        answers_counter += 1
-
-                        unit_measurement = answers[answers_counter].__getattribute__('text')
-                        # extraction.append(unit_measurement)
-                        # print('unit measurement', unit_measurement)
-                        sheet.write(counter, 15, unit_measurement)
-                        answers_counter += 1
-
-                        counter += 1
-
-                        emissionlimit = answers[answers_counter].__getattribute__('text')
-                        # extraction.append(emissionlimit)
-                        # print('emissionlimit', emissionlimit)
-                        cell16 = float(emissionlimit)
-                        # sheet.write(counter, 17, emissionlimit)
-                        answers_counter += 1
-
-                        units = answers[answers_counter].__getattribute__('text')
-                        # extraction.append(units)
-                        # print('units', units)
-                        cell17 = units
-                        # sheet.write(counter, 18, units)
-                        answers_counter += 1
-
-                        authorization = answers[answers_counter].__getattribute__('text')
-                        # extraction.append(authorization)
-                        cell18 = authorization
-                        # print('authorization', authorization)
-                        answers_counter += 1
-
-                        number_of_contaminants -= 1
-                else:
-                    print_out1 = print_out + ' ' + answers[answers_counter].__getattribute__('text')
-                    # print('print out =', print_out1)
-                    answer = answers[answers_counter].__getattribute__('text')
-                    # print('TEST 8', print_out)
-                    if print_out == 'Incident Tracking Number:':
-                        # sheet.write(counter, 0, int(answer))
-                        cell0 = int(answer)
-                    elif print_out == 'RN:':
-                        # sheet.write(counter, 1, answer)
-                        cell1 = answer
-                    elif print_out == 'Regulated Entity Name:':
-                        # sheet.write(counter, 2, answer)
-                        cell2 = answer
-                    elif print_out == 'Physical Location:':
-                        # sheet.write(counter, 3, answer)
-                        cell3 = answer
-                    elif print_out == 'County:':
-                        # sheet.write(counter, 4, answer)
-                        cell4 = answer
-                    elif print_out == 'Notification Jurisdictions:':
-                        # sheet.write(counter, 5, answer)
-                        cell5 = answer
-                    elif print_out == 'Date and Time Event Discovered or Scheduled Activity Start:':
-                        # sheet.write(counter, 6, answer)
-                        cell6 = answer
-                    elif print_out == 'Date and Time Event or Scheduled Activity Ended:':
-                        # sheet.write(counter, 7, answer)
-                        cell7 = answer
-                    elif print_out == 'Event/Activity Type:':
-                        # sheet.write(counter, 8, answer)
-                        cell8 = answer
-                    elif print_out == '1 - Emission Point Common Name:':
-                        # sheet.write(counter, 9, answer)
-                        cell9 = answer
-                    elif print_out == 'Emission Point Number:':
-                        # sheet.write(counter, 10, answer)
-                        cell10 = answer
-                    elif print_out == 'Basis Used to Determine Quantities and Any Additional Information Necessary to Evaluate the Event:':
-                        # sheet.write(counter, 19, answer)
-                        cell19 = answer
-                    elif print_out == 'Cause of Emission Event or Excess Opacity Event, or Reason for Scheduled Activity:':
-                        # sheet.write(counter, 20, answer)
-                        cell20 = answer
-                    elif print_out == 'Actions Taken, or Being Taken, to Minimize Emissions And/or Correct the Situation:':
-                        # sheet.write(counter, 21, answer)
-                        cell21 = answer
-                    # print('TEST 9', answer)
-                    # extraction.append(answers[answers_counter].__getattribute__('text'))
-                    questions_counter += 1
-                    answers_counter += 1
-        filling_sheet(switch, sheet, counter, last_count, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
-                      cell9, cell10, cell16, cell17, cell18, cell19, cell20, cell21)
-        if switch:
-            switch = False
-        last_count = counter
+        contaminants(questions, answers, order, sheet)
     book.close()
 
 
 def main():
     driver = setup()
-    cases, case_numbers = collecting_information(driver)
-    extracting_information(driver, cases, case_numbers)
+    cases = collecting_information(driver)
+    extracting_information(driver, cases)
 
 
 main()
