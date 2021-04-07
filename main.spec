@@ -1,11 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
+
+spec_root = os.path.abspath(SPECPATH)
 
 block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['C:\\Users\\teran\\PycharmProjects\\PublicCitizen_Project'],
-             binaries=[],
+             pathex=[spec_root],
+             binaries=[('./driver/chromedriver.exe', './driver')],
              datas=[],
              hiddenimports=[],
              hookspath=[],
