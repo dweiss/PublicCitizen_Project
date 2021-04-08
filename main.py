@@ -1,11 +1,19 @@
+import sys
 from selenium import webdriver
 import xlsxwriter
 import os
+from configparser import ConfigParser
 
 global switch
 global counter
 global last_count
 
+# def resource_path(relative_path: str) -> str:
+#     try:
+#         base_path = sys._MEIPASS
+#     except Exception:
+#         base_path = os.path.dirname(__file__)
+#     return os.path.join(base_path, relative_path)
 
 def number_finder(text):
     return any(i.isdigit() for i in text)
@@ -19,6 +27,9 @@ def new_line_remover(question):
 
 
 def setup():
+    # config = ConfigParser()
+    # config.read("example.ini")
+    # CHROME_DRIVER_PATH = config.get("chromedriver", "path")
     # Naming Driver
     driver = webdriver.Chrome()
 
