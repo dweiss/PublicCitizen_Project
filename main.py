@@ -129,13 +129,13 @@ def time_converter(half, time):
     return str(hour) + ':' + str(sep[1])
 
 
-def filling_sheet(sheet, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
-                  cell9, cell10, cell19, cell20, cell21):
+def filling_sheet(sheet, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
+                  cell9, cell10, cell19, cell20, cell21, cell22):
     i = last_count
     if switch:
         i += 1
     while i < counter:
-        sheet.write(i, 0, cell0)
+        sheet.write_url(i, 0, cell0, string=number)
         sheet.write(i, 1, cell1)
         sheet.write(i, 2, cell2)
         sheet.write(i, 3, cell3)
@@ -149,10 +149,12 @@ def filling_sheet(sheet, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7,
         sheet.write(i, 19, cell19)
         sheet.write(i, 20, cell20)
         sheet.write(i, 21, cell21)
+        sheet.write(i, 22, cell22)
+        sheet.write(i, 23, '=(H' + str(i+1) + '-G' + str(i+1) + ')*24')
         i += 1
 
 
-def contaminants(questions, answers, order, sheet):
+def contaminants(questions, answers, order, sheet, j):
     # Loop Counters
     questions_counter = 0
     answers_counter = 0
@@ -206,7 +208,8 @@ def contaminants(questions, answers, order, sheet):
                 count = True
                 answer = answers[answers_counter].__getattribute__('text')
                 if print_out == 'Incident Tracking Number:':
-                    cell0 = int(answer)
+                    number = answer
+                    cell0 = j
                 elif print_out == 'RN:':
                     cell1 = answer
                 elif print_out == 'Regulated Entity Name:':
@@ -248,11 +251,13 @@ def contaminants(questions, answers, order, sheet):
                     cell20 = answer
                 elif print_out == 'Actions Taken, or Being Taken, to Minimize Emissions And/or Correct the Situation:':
                     cell21 = answer
+                elif print_out == 'Report Type:':
+                    cell22 = answer
                 if count:
                     questions_counter += 1
                     answers_counter += 1
-    filling_sheet(sheet, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
-                  cell9, cell10, cell19, cell20, cell21)
+    filling_sheet(sheet, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
+                  cell9, cell10, cell19, cell20, cell21, cell22)
     if switch:
         switch = False
     last_count = counter
@@ -262,6 +267,8 @@ def extracting_information(driver, cases):
     direct = os.getcwd() + '\TCEQ_Data.xlsx'
     book = xlsxwriter.Workbook(direct)
     sheet = book.add_worksheet('Cases')
+    download = driver.find_element_by_id('dwnldlink')
+    download.click()
     # sheet.set_column(0, 1, 100)
     sheet.write(0, 0, 'INCIDENT NO.')
     sheet.write(0, 1, 'RN')
@@ -282,9 +289,11 @@ def extracting_information(driver, cases):
     sheet.write(0, 16, 'EMISSION LIMIT')
     sheet.write(0, 17, 'LIMIT UNITS')
     sheet.write(0, 18, 'AUTHORIZATION COMMENT')
-    sheet.write(0, 19, 'COMMENT NO.')
+    sheet.write(0, 19, 'Basis Used to Determine Quantities and Any Additional Information Necessary to Evaluate the Event')
     sheet.write(0, 20, 'Cause of Emission Event')
     sheet.write(0, 21, 'Actions Taken')
+    sheet.write(0, 22, 'Report Type:')
+    sheet.write(0, 23, 'Hours Elapsed:')
     global counter
     global last_count
     global switch
@@ -308,7 +317,7 @@ def extracting_information(driver, cases):
         # Seperated by forms
         order = driver.find_elements_by_class_name('aeme')
 
-        contaminants(questions, answers, order, sheet)
+        contaminants(questions, answers, order, sheet, j)
     book.close()
 
 
