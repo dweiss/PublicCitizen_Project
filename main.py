@@ -26,6 +26,7 @@ def setup():
     driver.get('https://www2.tceq.texas.gov/oce/eer/index.cfm')
 
     # Find input boxes
+    print('Enter information here, enter nothing to omit.')
     print('If you would like a single search enter "Y":')
     single_search = input()
     if single_search == 'Y':
@@ -47,7 +48,6 @@ def setup():
         event_type = driver.find_element_by_name('ls_event_typ_cd')
 
         #Best Test Date 2/14/2021
-        print('Enter information here, enter nothing to omit.')
         print('Enter Beginning Start Date Range (##/##/####):')
         beginning_start = input()
         event_start_beg.send_keys(beginning_start)
