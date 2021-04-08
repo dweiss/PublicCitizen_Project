@@ -1,20 +1,12 @@
-import sys
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 import xlsxwriter
 import os
-from configparser import ConfigParser
 
 global switch
 global counter
 global last_count
 
-# def resource_path(relative_path: str) -> str:
-#     try:
-#         base_path = sys._MEIPASS
-#     except Exception:
-#         base_path = os.path.dirname(__file__)
-#     return os.path.join(base_path, relative_path)
 
 def number_finder(text):
     return any(i.isdigit() for i in text)
@@ -28,10 +20,6 @@ def new_line_remover(question):
 
 
 def setup():
-    # config = ConfigParser()
-    # config.read("example.ini")
-    # CHROME_DRIVER_PATH = config.get("chromedriver", "path")
-    # Naming Driver
     driver = webdriver.Chrome(ChromeDriverManager().install())
 
     # Go to Website.
@@ -58,6 +46,7 @@ def setup():
         region = driver.find_element_by_name('ls_region_cd')
         event_type = driver.find_element_by_name('ls_event_typ_cd')
 
+        #Best Test Date 2/14/2021
         print('Enter information here, enter nothing to omit.')
         print('Enter Beginning Start Date Range (##/##/####):')
         beginning_start = input()
@@ -92,7 +81,6 @@ def setup():
         print('Enter Event Type:')
         event_type_input = input()
         event_type.send_keys(event_type_input)
-
 
     # Click submit
     search = driver.find_element_by_name('_fuseaction=main.searchresults')
@@ -130,6 +118,7 @@ def collecting_information(driver):
 
     return cases
 
+
 def time_converter(half, time):
     sep = time.split(":")
     hour = int(sep[0])
@@ -139,8 +128,9 @@ def time_converter(half, time):
         hour += 12
     return str(hour) + ':' + str(sep[1])
 
+
 def filling_sheet(sheet, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
-                  cell9, cell10, cell16, cell17, cell18, cell19, cell20, cell21):
+                  cell9, cell10, cell19, cell20, cell21):
     i = last_count
     if switch:
         i += 1
@@ -156,13 +146,11 @@ def filling_sheet(sheet, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7,
         sheet.write(i, 8, cell8)
         sheet.write(i, 9, cell9)
         sheet.write(i, 10, cell10)
-        sheet.write(i, 16, cell16)
-        sheet.write(i, 17, cell17)
-        sheet.write(i, 18, cell18)
         sheet.write(i, 19, cell19)
         sheet.write(i, 20, cell20)
         sheet.write(i, 21, cell21)
         i += 1
+
 
 def contaminants(questions, answers, order, sheet):
     # Loop Counters
@@ -172,10 +160,6 @@ def contaminants(questions, answers, order, sheet):
     global switch
     global counter
     global last_count
-
-    cell16 = float(0)
-    cell17 = ''
-    cell18 = ''
 
     # Gathering Information
     while questions_counter < len(questions):
@@ -203,21 +187,19 @@ def contaminants(questions, answers, order, sheet):
                     sheet.write(counter, 15, unit_measurement)
                     answers_counter += 1
 
-                    counter += 1
-
                     emissionlimit = answers[answers_counter].__getattribute__('text')
-                    cell16 = float(emissionlimit)
-                    # sheet.write(counter, 17, emissionlimit)
+                    sheet.write(counter, 16, float(emissionlimit))
                     answers_counter += 1
 
                     units = answers[answers_counter].__getattribute__('text')
-                    cell17 = units
-                    # sheet.write(counter, 18, units)
+                    sheet.write(counter, 17, units)
                     answers_counter += 1
 
                     authorization = answers[answers_counter].__getattribute__('text')
-                    cell18 = authorization
+                    sheet.write(counter, 18, authorization)
                     answers_counter += 1
+
+                    counter += 1
 
                     number_of_contaminants -= 1
             else:
@@ -270,7 +252,7 @@ def contaminants(questions, answers, order, sheet):
                     questions_counter += 1
                     answers_counter += 1
     filling_sheet(sheet, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
-                cell9, cell10, cell16, cell17, cell18, cell19, cell20, cell21)
+                  cell9, cell10, cell19, cell20, cell21)
     if switch:
         switch = False
     last_count = counter
