@@ -1,5 +1,6 @@
 import sys
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 import xlsxwriter
 import os
 from configparser import ConfigParser
@@ -31,7 +32,7 @@ def setup():
     # config.read("example.ini")
     # CHROME_DRIVER_PATH = config.get("chromedriver", "path")
     # Naming Driver
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(ChromeDriverManager().install())
 
     # Go to Website.
     driver.get('https://www2.tceq.texas.gov/oce/eer/index.cfm')
