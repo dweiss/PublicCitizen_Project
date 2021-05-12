@@ -6,6 +6,8 @@ import os
 global switch
 global counter
 global last_count
+global single_incident
+global single_case
 
 
 def number_finder(text):
@@ -20,6 +22,8 @@ def new_line_remover(question):
 
 
 def setup():
+    global single_case
+    global single_incident
     driver = webdriver.Chrome(ChromeDriverManager().install())
 
     # Go to Website.
@@ -34,7 +38,10 @@ def setup():
         print('Enter Incident Number:')
         incident_number_input = input()
         incident_number.send_keys(incident_number_input)
+        single_case = True
+        single_incident = [incident_number_input]
     else:
+        single_case = False
         event_start_beg = driver.find_element_by_name('event_start_beg_dt')
         event_start_end = driver.find_element_by_name('event_start_end_dt')
         event_end_beg = driver.find_element_by_name('event_end_beg_dt')
@@ -130,27 +137,49 @@ def time_converter(half, time):
 
 
 def filling_sheet(sheet, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
-                  cell9, cell10, cell19, cell20, cell21, cell22):
+                  cell9, cell10, cell19, cell20, cell21, cell22, cell23):
     i = last_count
     if switch:
         i += 1
     while i < counter:
+        #incident number
         sheet.write_url(i, 0, cell0, string=number)
+        #RN number
         sheet.write(i, 1, cell1)
+        #RE Name
         sheet.write(i, 2, cell2)
+        #Physical Location
         sheet.write(i, 3, cell3)
+        #County
         sheet.write(i, 4, cell4)
+        #TCEQ Region
         sheet.write(i, 5, cell5)
+        #Start Date/Time
         sheet.write(i, 6, cell6)
+        #End Date/Time
         sheet.write(i, 7, cell7)
+        #Event Type
         sheet.write(i, 8, cell8)
+        #Emission Point Name
         sheet.write(i, 9, cell9)
+        #EPN
         sheet.write(i, 10, cell10)
-        sheet.write(i, 19, cell19)
+        #Cause of Emission Event
         sheet.write(i, 20, cell20)
+        #Actions Taken
         sheet.write(i, 21, cell21)
-        sheet.write(i, 22, cell22)
-        sheet.write(i, 23, '=(H' + str(i+1) + '-G' + str(i+1) + ')*24')
+        #Basis Used
+        sheet.write(i, 22, cell19)
+        #Report Type
+        #sheet.write(i, 22, cell22)
+        #Initial Notification
+        sheet.write(i, 23, cell23)
+        #Hours Elapsed
+        sheet.write(i, 24, '=(H' + str(i+1) + '-G' + str(i+1) + ')*24')
+        #Emissions Rate (lbs/hr)
+        sheet.write(i, 25, '=M' + str(i+1) + '/Y' + str(i+1))
+        #Flag
+        sheet.write(i, 26, '=IF(Z' + str(i+1) + '>=Q' + str(i+1) + ',"Y","N")')
         i += 1
 
 
@@ -253,11 +282,13 @@ def contaminants(questions, answers, order, sheet, j):
                     cell21 = answer
                 elif print_out == 'Report Type:':
                     cell22 = answer
+                elif print_out == 'Initial Notification Date/Time:':
+                    cell23 = answer
                 if count:
                     questions_counter += 1
                     answers_counter += 1
     filling_sheet(sheet, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
-                  cell9, cell10, cell19, cell20, cell21, cell22)
+                  cell9, cell10, cell19, cell20, cell21, cell22, cell23)
     if switch:
         switch = False
     last_count = counter
@@ -289,26 +320,44 @@ def extracting_information(driver, cases):
     sheet.write(0, 16, 'EMISSION LIMIT')
     sheet.write(0, 17, 'LIMIT UNITS')
     sheet.write(0, 18, 'AUTHORIZATION COMMENT')
-    sheet.write(0, 19, 'Basis Used to Determine Quantities and Any Additional Information Necessary to Evaluate the Event')
+    sheet.write(0, 19, 'COMMENT NO')
     sheet.write(0, 20, 'Cause of Emission Event')
     sheet.write(0, 21, 'Actions Taken')
-    sheet.write(0, 22, 'Report Type:')
-    sheet.write(0, 23, 'Hours Elapsed:')
+    sheet.write(0, 22, 'Basis Used to Determine Quantities and Any Additional Information Necessary to Evaluate the Event')
+    #sheet.write(0, 22, 'Report Type:')
+    sheet.write(0, 23, 'Initial Notification:')
+    sheet.write(0, 24, 'Hours Elapsed:')
+    sheet.write(0, 25, 'Emissions Rate (lbs/hr):')
+    sheet.write(0, 26, 'Flag(Y/N):')
+
     global counter
     global last_count
     global switch
+    global single_incident
+    global single_case
 
     counter = 0
     last_count = 0
     switch = True
     # Clicking through the files
-    count = True
-    for j in cases:
-        if (count):
-            counter += 1
-            count = False
-        # Go to files
-        driver.get(j)
+    if single_case == False:
+        count = True
+        for j in cases:
+            if (count):
+                counter += 1
+                count = False
+            # Go to files
+            driver.get(j)
+            # Yellow Boxes
+            questions = driver.find_elements_by_tag_name('th')
+            # White Boxes
+            answers = driver.find_elements_by_tag_name('td')
+            # Seperated by forms
+            order = driver.find_elements_by_class_name('aeme')
+
+            contaminants(questions, answers, order, sheet, j)
+    else:
+        j = driver.current_url
 
         # Yellow Boxes
         questions = driver.find_elements_by_tag_name('th')
@@ -322,9 +371,14 @@ def extracting_information(driver, cases):
 
 
 def main():
+    global single_case
+    global single_incident
     driver = setup()
-    cases = collecting_information(driver)
-    extracting_information(driver, cases)
+    if single_case:
+        extracting_information(driver, single_incident)
+    else:
+        cases = collecting_information(driver)
+        extracting_information(driver, cases)
 
 
 main()
