@@ -4,6 +4,7 @@ import xlsxwriter
 import os
 
 global switch
+global case_tracker
 global counter
 global last_count
 global single_incident
@@ -30,16 +31,13 @@ def setup():
     driver.get('https://www2.tceq.texas.gov/oce/eer/index.cfm')
 
     # Find input boxes
-    print('Enter information here, enter nothing to omit.')
-    print('If you would like a single search enter "Y":')
+    print('Enter Incident Number:')
     single_search = input()
-    if single_search == 'Y':
+    if len(single_search) > 0:
         incident_number = driver.find_element_by_name('incid_track_num')
-        print('Enter Incident Number:')
-        incident_number_input = input()
-        incident_number.send_keys(incident_number_input)
+        incident_number.send_keys(single_search)
         single_case = True
-        single_incident = [incident_number_input]
+        single_incident = [single_search]
     else:
         single_case = False
         event_start_beg = driver.find_element_by_name('event_start_beg_dt')
@@ -136,11 +134,15 @@ def time_converter(half, time):
     return str(hour) + ':' + str(sep[1])
 
 
-def filling_sheet(sheet, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
+def filling_sheet(sheet, sheet2, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
                   cell9, cell10, cell19, cell20, cell21, cell22, cell23):
     i = last_count
+    global counter
     if switch:
         i += 1
+    #330891 is Kaiba's test case
+    if counter == 1:
+        counter = 2
     while i < counter:
         #incident number
         sheet.write_url(i, 0, cell0, string=number)
@@ -181,9 +183,13 @@ def filling_sheet(sheet, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6
         #Flag
         sheet.write(i, 26, '=IF(Z' + str(i+1) + '>=Q' + str(i+1) + ',"Y","N")')
         i += 1
+    global case_tracker
+    sheet2.write_url(case_tracker - 1, 0, cell0, string=number)
+    sheet2.write(case_tracker - 1, 1, "=SUMIF(Cases!A:A,'Incident Sums'!A" + str(case_tracker) + ",Cases!M:M)")
+    case_tracker += 1
 
 
-def contaminants(questions, answers, order, sheet, j):
+def contaminants(questions, answers, order, sheet, sheet2, j):
     # Loop Counters
     questions_counter = 0
     answers_counter = 0
@@ -236,6 +242,8 @@ def contaminants(questions, answers, order, sheet, j):
             else:
                 count = True
                 answer = answers[answers_counter].__getattribute__('text')
+                #print(print_out)
+                #print('answer[' + str(answers_counter) + '] '+ answer)
                 if print_out == 'Incident Tracking Number:':
                     number = answer
                     cell0 = j
@@ -272,6 +280,8 @@ def contaminants(questions, answers, order, sheet, j):
                     cell8 = answer
                 elif print_out == '1 - Emission Point Common Name:':
                     cell9 = answer
+                elif print_out == 'Emission Point Common Name:':
+                    cell9 = 'N/A'
                 elif print_out == 'Emission Point Number:':
                     cell10 = answer
                 elif print_out == 'Basis Used to Determine Quantities and Any Additional Information Necessary to Evaluate the Event:':
@@ -287,7 +297,7 @@ def contaminants(questions, answers, order, sheet, j):
                 if count:
                     questions_counter += 1
                     answers_counter += 1
-    filling_sheet(sheet, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
+    filling_sheet(sheet, sheet2, number, cell0, cell1, cell2, cell3, cell4, cell5, cell6, cell7, cell8,
                   cell9, cell10, cell19, cell20, cell21, cell22, cell23)
     if switch:
         switch = False
@@ -298,6 +308,9 @@ def extracting_information(driver, cases):
     direct = os.getcwd() + '\TCEQ_Data.xlsx'
     book = xlsxwriter.Workbook(direct)
     sheet = book.add_worksheet('Cases')
+    sheet2 = book.add_worksheet('Incident Sums')
+    global case_tracker
+    case_tracker = 2
     download = driver.find_element_by_id('dwnldlink')
     download.click()
     # sheet.set_column(0, 1, 100)
@@ -330,6 +343,9 @@ def extracting_information(driver, cases):
     sheet.write(0, 25, 'Emissions Rate (lbs/hr):')
     sheet.write(0, 26, 'Flag(Y/N):')
 
+    sheet2.write(0, 0, 'INCIDENT NO.')
+    sheet2.write(0, 1, 'EST QUANTITY/OPACITY')
+
     global counter
     global last_count
     global switch
@@ -355,8 +371,9 @@ def extracting_information(driver, cases):
             # Seperated by forms
             order = driver.find_elements_by_class_name('aeme')
 
-            contaminants(questions, answers, order, sheet, j)
+            contaminants(questions, answers, order, sheet, sheet2, j)
     else:
+        counter += 1
         j = driver.current_url
 
         # Yellow Boxes
@@ -366,7 +383,7 @@ def extracting_information(driver, cases):
         # Seperated by forms
         order = driver.find_elements_by_class_name('aeme')
 
-        contaminants(questions, answers, order, sheet, j)
+        contaminants(questions, answers, order, sheet, sheet2, j)
     book.close()
 
 
