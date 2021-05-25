@@ -347,8 +347,7 @@ def extracting_information(driver, cases):
     sheet.write(0, 26, 'Flag(Y/N):')
 
     sheet2.write(0, 0, 'INCIDENT NO.')
-    sheet2.write(0, 1, 'EST QUANTITY/OPACITY')
-    sheet2.write(0, 5, 'INCIDENT SUM(POUNDS)')
+    sheet2.write(0, 1, 'INCIDENT SUM(POUNDS)')
 
     global counter
     global last_count
