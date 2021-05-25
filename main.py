@@ -185,10 +185,10 @@ def filling_sheet(sheet, sheet2, number, cell0, cell1, cell2, cell3, cell4, cell
         i += 1
     global case_tracker
     sheet2.write_url(case_tracker - 1, 0, cell0, string=number)
-    sheet2.write(case_tracker - 1, 1, "=SUMIF(Cases!A:A,'Incident Sums'!A" + str(case_tracker) + ",Cases!M:M)")
+    #sheet2.write(case_tracker - 1, 1, "=SUMIF(Cases!A:A,'Incident Sums'!A" + str(case_tracker) + ",Cases!M:M)")
     #SUMIF(Cases!A: A, 'Incident Sums'!A" + str(case_tracker) + ", Cases!M: M)
     #=SUMIFS(Cases!M:M,Cases!A:A,'Incident Sums'!A2,Cases!P:P,"<>*OPACITY*")
-    sheet2.write(case_tracker - 1, 5, "=SUMIFS(Cases!M:M,Cases!A:A,'Incident Sums'!A" + str(case_tracker) + ',Cases!P:P,"<>*OPACITY*")')
+    sheet2.write(case_tracker - 1, 1, "=SUMIFS(Cases!M:M,Cases!A:A,'Incident Sums'!A" + str(case_tracker) + ',Cases!P:P,"<>*OPACITY*")')
     case_tracker += 1
 
 
