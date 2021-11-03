@@ -220,7 +220,14 @@ def contaminants(questions, answers, order, sheet, sheet2, j):
                     answers_counter += 1
 
                     quantity = answers[answers_counter].__getattribute__('text')
-                    sheet.write(counter, 12, float(quantity))
+                    while True:
+                        try:
+                            sheet.write(counter, 12, float(quantity))
+                            break
+                        except ValueError:
+                            sheet.write(counter, 12, quantity)
+                            break
+
                     answers_counter += 1
 
                     unit_measurement = answers[answers_counter].__getattribute__('text')
