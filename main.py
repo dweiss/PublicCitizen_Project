@@ -228,11 +228,8 @@ def contaminants(questions, answers, order, sheet, sheet2, j):
                     quantity = answers[answers_counter].__getattribute__('text')
                     while True:
                         try:
-                            if isfloat(quantity):
-                                sheet.write(counter, 12, float(quantity))
-                                break
-                            else:
-                                sheet.write(counter, 12, quantity)
+                            sheet.write(counter, 12, float(quantity))
+                            break
                         except ValueError:
                             sheet.write(counter, 12, quantity)
                             break
