@@ -39,7 +39,7 @@
  [],
  False,
  False,
- 1650230905,
+ 1650339630,
  [('run.exe',
    'c:\\users\\teran\\pycharmprojects\\publiccitizen_project\\venv\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\run.exe',
    'EXECUTABLE')])
