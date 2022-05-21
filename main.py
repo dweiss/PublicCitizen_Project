@@ -274,9 +274,13 @@ def contaminants(questions, answers, order, sheet, sheet2, j):
                     cell3 = answer
                 elif print_out == 'County:':
                     cell4 = answer
+                #bookmark
                 elif print_out == 'Notification Jurisdictions:':
                     x = answer.split(" ")
-                    cell5 = int(x[1])
+                    if len(x) > 1:
+                        cell5 = int(x[1])
+                    else:
+                        cell5 = ""
                 elif print_out == 'Process Unit or Area Common Names':
                     text = order[2].__getattribute__('text').split("\n")
                     answers_counter += (len(text) - 1)
@@ -293,7 +297,10 @@ def contaminants(questions, answers, order, sheet, sheet2, j):
                     cell6 = str(y[0]) + ' ' + time1
                 elif print_out == 'Date and Time Event or Scheduled Activity Ended:':
                     z = answer.split(" ")
-                    time2 = time_converter(z[-1], z[-2])
+                    if len(z) > 1:
+                        time2 = time_converter(z[-1], z[-2])
+                    else:
+                        time2 = z[0]
                     cell7 = str(z[0]) + ' ' + time2
                 elif print_out == 'Event/Activity Type:':
                     cell8 = answer
