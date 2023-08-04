@@ -1,5 +1,6 @@
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 import xlsxwriter
 import os
 
@@ -31,7 +32,8 @@ def new_line_remover(question):
 def setup():
     global single_case
     global single_incident
-    driver = webdriver.Chrome(ChromeDriverManager().install())
+    # driver = webdriver.Chrome(ChromeDriverManager(driver_version="114.0.5735.90").install())
+    driver = webdriver.Firefox(executable_path=GeckoDriverManager().install())
 
     # Go to Website.
     driver.get('https://www2.tceq.texas.gov/oce/eer/index.cfm')
